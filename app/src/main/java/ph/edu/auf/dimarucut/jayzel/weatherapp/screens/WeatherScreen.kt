@@ -26,6 +26,8 @@ import ph.edu.auf.dimarucut.jayzel.weatherapp.R
 import ph.edu.auf.dimarucut.jayzel.weatherapp.api.RetrofitInstance
 import java.util.*
 import ph.edu.auf.dimarucut.jayzel.weatherapp.model.WeatherResponse
+import androidx.compose.foundation.shape.RoundedCornerShape
+
 
 @Composable
 fun WeatherScreen(fusedLocationClient: FusedLocationProviderClient) {
@@ -104,6 +106,7 @@ fun WeatherScreen(fusedLocationClient: FusedLocationProviderClient) {
             onValueChange = { searchQuery = it },
             label = { Text("Search Location") },
             modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(32.dp),
             leadingIcon = {
                 IconButton(onClick = {
                     coroutineScope.launch {
@@ -129,26 +132,28 @@ fun WeatherScreen(fusedLocationClient: FusedLocationProviderClient) {
                 }) {
                     Icon(painter = painterResource(id = R.drawable.ic_location), contentDescription = "Get Current Location")
                 }
-            }
-        )
-        Button(onClick = {
-            coroutineScope.launch {
-                try {
-                    val response = RetrofitInstance.api.getWeatherByCityName(
-                        cityName = searchQuery,
-                        apiKey = "8b9290da0228ad4e99bc79358e2c70b8"
-                    )
-                    weatherResponse = response
-                    cityName = searchQuery
-                    barangayName = null
-                    provinceName = null
-                } catch (e: Exception) {
-                    errorMessage = e.message
+            },
+            trailingIcon = {
+                IconButton(onClick = {
+                    coroutineScope.launch {
+                        try {
+                            val response = RetrofitInstance.api.getWeatherByCityName(
+                                cityName = searchQuery,
+                                apiKey = "8b9290da0228ad4e99bc79358e2c70b8"
+                            )
+                            weatherResponse = response
+                            cityName = searchQuery
+                            barangayName = null
+                            provinceName = null
+                        } catch (e: Exception) {
+                            errorMessage = e.message
+                        }
+                    }
+                }) {
+                    Icon(painter = painterResource(id = R.drawable.ic_search), contentDescription = "Search")
                 }
             }
-        }) {
-            Text("Search")
-        }
+        )
         Spacer(modifier = Modifier.height(16.dp))
         Box(
             modifier = Modifier
