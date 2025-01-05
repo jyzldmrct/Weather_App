@@ -224,6 +224,7 @@ private fun getWeatherIconResId(description: String): Int {
         "scattered clouds", "broken clouds" -> R.drawable.ic_cloudy
         "overcast clouds" -> R.drawable.ic_overcast
         "shower rain", "rain" -> R.drawable.ic_rain
+        "shower rain", "rain" -> R.drawable.ic_rain
         "thunderstorm" -> R.drawable.ic_thunderstorm
         "snow" -> R.drawable.ic_snow
         "mist", "fog" -> R.drawable.ic_fog
