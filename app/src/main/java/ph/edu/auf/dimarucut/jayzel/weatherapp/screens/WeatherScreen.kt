@@ -27,6 +27,8 @@ import ph.edu.auf.dimarucut.jayzel.weatherapp.api.RetrofitInstance
 import java.util.*
 import ph.edu.auf.dimarucut.jayzel.weatherapp.model.WeatherResponse
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.tooling.preview.Preview
+import com.google.android.gms.location.LocationServices
 
 
 @Composable
@@ -101,64 +103,62 @@ fun WeatherScreen(fusedLocationClient: FusedLocationProviderClient) {
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        TextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
-            label = { Text("Search Location") },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(32.dp),
-            leadingIcon = {
-                IconButton(onClick = {
-                    coroutineScope.launch {
-                        getLastLocation(fusedLocationClient, context, onLocationReceived = { lat, lon, city, barangay, province ->
-                            coroutineScope.launch {
-                                try {
-                                    val response = RetrofitInstance.api.getWeather(
-                                        latitude = lat.toString(),
-                                        longitude = lon.toString(),
-                                        apiKey = "8b9290da0228ad4e99bc79358e2c70b8"
-                                    )
-                                    weatherResponse = response
-                                    cityName = city
-                                    barangayName = barangay
-                                    provinceName = province
-                                    searchQuery = city
-                                } catch (e: Exception) {
-                                    errorMessage = e.message
-                                }
+
+    TextField(
+        value = searchQuery,
+        onValueChange = { searchQuery = it },
+        label = { Text("Search Location") },
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        leadingIcon = {
+            IconButton(onClick = {
+                coroutineScope.launch {
+                    getLastLocation(fusedLocationClient, context, onLocationReceived = { lat, lon, city, barangay, province ->
+                        coroutineScope.launch {
+                            try {
+                                val response = RetrofitInstance.api.getWeather(
+                                    latitude = lat.toString(),
+                                    longitude = lon.toString(),
+                                    apiKey = "8b9290da0228ad4e99bc79358e2c70b8"
+                                )
+                                weatherResponse = response
+                                cityName = city
+                                barangayName = barangay
+                                provinceName = province
+                                searchQuery = city
+                            } catch (e: Exception) {
+                                errorMessage = e.message
                             }
-                        })
-                    }
-                }) {
-                    Icon(painter = painterResource(id = R.drawable.ic_location), contentDescription = "Get Current Location")
-                }
-            },
-            trailingIcon = {
-                IconButton(onClick = {
-                    coroutineScope.launch {
-                        try {
-                            val response = RetrofitInstance.api.getWeatherByCityName(
-                                cityName = searchQuery,
-                                apiKey = "8b9290da0228ad4e99bc79358e2c70b8"
-                            )
-                            weatherResponse = response
-                            cityName = searchQuery
-                            barangayName = null
-                            provinceName = null
-                        } catch (e: Exception) {
-                            errorMessage = e.message
                         }
-                    }
-                }) {
-                    Icon(painter = painterResource(id = R.drawable.ic_search), contentDescription = "Search")
+                    })
                 }
+            }) {
+                Icon(painter = painterResource(id = R.drawable.ic_location), contentDescription = "Get Current Location")
             }
-        )
+        },
+        trailingIcon = {
+            IconButton(onClick = {
+                coroutineScope.launch {
+                    try {
+                        val response = RetrofitInstance.api.getWeatherByCityName(
+                            cityName = searchQuery,
+                            apiKey = "8b9290da0228ad4e99bc79358e2c70b8"
+                        )
+                        weatherResponse = response
+                        cityName = searchQuery
+                        barangayName = null
+                        provinceName = null
+                    } catch (e: Exception) {
+                        errorMessage = e.message
+                    }
+                }
+            }) {
+                Icon(painter = painterResource(id = R.drawable.ic_search), contentDescription = "Search")
+            }
+        }
+    )
         Spacer(modifier = Modifier.height(16.dp))
         Box(
-            modifier = Modifier
-                .background(Color(0x8034B5E4))
-                .padding(16.dp)
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -193,8 +193,6 @@ fun WeatherScreen(fusedLocationClient: FusedLocationProviderClient) {
             Text(text = "Weather: ${it.weather[0].description}")
         } ?: errorMessage?.let {
             Text(text = it, color = MaterialTheme.colorScheme.error)
-        } ?: run {
-            CircularProgressIndicator()
         }
     }
 }
@@ -224,10 +222,17 @@ private fun getWeatherIconResId(description: String): Int {
         "scattered clouds", "broken clouds" -> R.drawable.ic_cloudy
         "overcast clouds" -> R.drawable.ic_overcast
         "shower rain", "rain" -> R.drawable.ic_rain
-        "shower rain", "rain" -> R.drawable.ic_rain
         "thunderstorm" -> R.drawable.ic_thunderstorm
         "snow" -> R.drawable.ic_snow
         "mist", "fog" -> R.drawable.ic_fog
         else -> R.drawable.ic_unknown
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun WeatherScreenPreview() {
+    val context = LocalContext.current
+    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+    WeatherScreen(fusedLocationClient = fusedLocationClient)
 }

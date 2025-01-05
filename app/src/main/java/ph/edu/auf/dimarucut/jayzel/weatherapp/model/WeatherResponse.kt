@@ -20,3 +20,29 @@ data class Weather(
 data class Wind(
     val speed: Double
 )
+
+data class WeeklyForecastResponse(
+    val daily: List<DailyForecast>
+)
+
+data class DailyForecast(
+    val dt: Long,
+    val temp: Temperature,
+    val weather: List<WeatherCondition>
+)
+
+data class Temperature(
+    val day: Double,
+    val min: Double,
+    val max: Double,
+    val night: Double,
+    val eve: Double,
+    val morn: Double
+)
+
+data class WeatherCondition(
+    val id: Int,
+    val main: String,
+    val description: String,
+    val icon: String
+)
