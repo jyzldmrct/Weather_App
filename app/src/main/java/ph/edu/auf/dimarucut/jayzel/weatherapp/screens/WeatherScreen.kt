@@ -9,6 +9,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,19 +18,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import ph.edu.auf.dimarucut.jayzel.weatherapp.R
 import ph.edu.auf.dimarucut.jayzel.weatherapp.api.RetrofitInstance
-import java.util.*
 import ph.edu.auf.dimarucut.jayzel.weatherapp.model.WeatherResponse
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.tooling.preview.Preview
-import com.google.android.gms.location.LocationServices
-
+import java.util.*
 
 @Composable
 fun WeatherScreen(fusedLocationClient: FusedLocationProviderClient) {
@@ -37,32 +37,17 @@ fun WeatherScreen(fusedLocationClient: FusedLocationProviderClient) {
     val coroutineScope = rememberCoroutineScope()
     var weatherResponse by remember { mutableStateOf<WeatherResponse?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var cityName by remember { mutableStateOf<String?>(null) }
-    var barangayName by remember { mutableStateOf<String?>(null) }
-    var provinceName by remember { mutableStateOf<String?>(null) }
+    var locationDetails by remember { mutableStateOf(LocationDetails()) }
     var searchQuery by remember { mutableStateOf("") }
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { isGranted: Boolean ->
             if (isGranted) {
-                getLastLocation(fusedLocationClient, context, onLocationReceived = { lat, lon, city, barangay, province ->
-                    coroutineScope.launch {
-                        try {
-                            val response = RetrofitInstance.api.getWeather(
-                                latitude = lat.toString(),
-                                longitude = lon.toString(),
-                                apiKey = "8b9290da0228ad4e99bc79358e2c70b8"
-                            )
-                            weatherResponse = response
-                            cityName = city
-                            barangayName = barangay
-                            provinceName = province
-                        } catch (e: Exception) {
-                            errorMessage = e.message
-                        }
-                    }
-                })
+                fetchLocationAndWeather(fusedLocationClient, context, coroutineScope, onWeatherFetched = { response, details ->
+                    weatherResponse = response
+                    locationDetails = details
+                }, onError = { errorMessage = it })
             } else {
                 errorMessage = "Location permission denied"
             }
@@ -70,29 +55,13 @@ fun WeatherScreen(fusedLocationClient: FusedLocationProviderClient) {
     )
 
     LaunchedEffect(Unit) {
-        when (PackageManager.PERMISSION_GRANTED) {
-            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) -> {
-                getLastLocation(fusedLocationClient, context, onLocationReceived = { lat, lon, city, barangay, province ->
-                    coroutineScope.launch {
-                        try {
-                            val response = RetrofitInstance.api.getWeather(
-                                latitude = lat.toString(),
-                                longitude = lon.toString(),
-                                apiKey = "8b9290da0228ad4e99bc79358e2c70b8"
-                            )
-                            weatherResponse = response
-                            cityName = city
-                            barangayName = barangay
-                            provinceName = province
-                        } catch (e: Exception) {
-                            errorMessage = e.message
-                        }
-                    }
-                })
-            }
-            else -> {
-                locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-            }
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            fetchLocationAndWeather(fusedLocationClient, context, coroutineScope, onWeatherFetched = { response, details ->
+                weatherResponse = response
+                locationDetails = details
+            }, onError = { errorMessage = it })
+        } else {
+            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
     }
 
@@ -103,92 +72,74 @@ fun WeatherScreen(fusedLocationClient: FusedLocationProviderClient) {
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        SearchBar(searchQuery, onSearchQueryChange = { searchQuery = it }, onSearch = {
+            coroutineScope.launch {
+                try {
+                    val response = RetrofitInstance.api.getWeatherByCityName(
+                        cityName = searchQuery,
+                        apiKey = "8b9290da0228ad4e99bc79358e2c70b8"
+                    )
+                    weatherResponse = response
+                    locationDetails = LocationDetails(city = searchQuery)
+                } catch (e: Exception) {
+                    errorMessage = e.message
+                }
+            }
+        }, onLocationClick = {
+            fetchLocationAndWeather(fusedLocationClient, context, coroutineScope, onWeatherFetched = { response, details ->
+                weatherResponse = response
+                locationDetails = details
+                searchQuery = details.city
+            }, onError = { errorMessage = it })
+        })
 
+        Spacer(modifier = Modifier.height(16.dp))
+
+        WeatherInfo(weatherResponse, locationDetails, errorMessage)
+    }
+}
+
+@Composable
+fun SearchBar(
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    onSearch: () -> Unit,
+    onLocationClick: () -> Unit
+) {
     TextField(
         value = searchQuery,
-        onValueChange = { searchQuery = it },
+        onValueChange = onSearchQueryChange,
         label = { Text("Search Location") },
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
         leadingIcon = {
-            IconButton(onClick = {
-                coroutineScope.launch {
-                    getLastLocation(fusedLocationClient, context, onLocationReceived = { lat, lon, city, barangay, province ->
-                        coroutineScope.launch {
-                            try {
-                                val response = RetrofitInstance.api.getWeather(
-                                    latitude = lat.toString(),
-                                    longitude = lon.toString(),
-                                    apiKey = "8b9290da0228ad4e99bc79358e2c70b8"
-                                )
-                                weatherResponse = response
-                                cityName = city
-                                barangayName = barangay
-                                provinceName = province
-                                searchQuery = city
-                            } catch (e: Exception) {
-                                errorMessage = e.message
-                            }
-                        }
-                    })
-                }
-            }) {
+            IconButton(onClick = onLocationClick) {
                 Icon(painter = painterResource(id = R.drawable.ic_location), contentDescription = "Get Current Location")
             }
         },
         trailingIcon = {
-            IconButton(onClick = {
-                coroutineScope.launch {
-                    try {
-                        val response = RetrofitInstance.api.getWeatherByCityName(
-                            cityName = searchQuery,
-                            apiKey = "8b9290da0228ad4e99bc79358e2c70b8"
-                        )
-                        weatherResponse = response
-                        cityName = searchQuery
-                        barangayName = null
-                        provinceName = null
-                    } catch (e: Exception) {
-                        errorMessage = e.message
-                    }
-                }
-            }) {
+            IconButton(onClick = onSearch) {
                 Icon(painter = painterResource(id = R.drawable.ic_search), contentDescription = "Search")
             }
         }
     )
-        Spacer(modifier = Modifier.height(16.dp))
-        Box(
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                weatherResponse?.let {
-                    val weatherIconResId = getWeatherIconResId(it.weather[0].description)
-                    Image(
-                        painter = painterResource(id = weatherIconResId),
-                        contentDescription = "Weather Icon",
-                        modifier = Modifier.size(128.dp)
-                    )
-                }
-                cityName?.let {
-                    Text(
-                        text = it,
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-        }
-        barangayName?.let {
-            Text(text = "Barangay: $it")
-        }
-        provinceName?.let {
-            Text(text = "Province: $it")
-        }
+}
+
+@Composable
+fun WeatherInfo(weatherResponse: WeatherResponse?, locationDetails: LocationDetails, errorMessage: String?) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         weatherResponse?.let {
+            val weatherIconResId = getWeatherIconResId(it.weather[0].description)
+            Image(
+                painter = painterResource(id = weatherIconResId),
+                contentDescription = "Weather Icon",
+                modifier = Modifier.size(128.dp)
+            )
+            Text(text = locationDetails.city, fontSize = 32.sp, fontWeight = FontWeight.Bold)
+            locationDetails.barangay?.let { Text(text = "Barangay: $it") }
+            locationDetails.province?.let { Text(text = "Province: $it") }
             val tempCelsius = it.main.temp - 273.15
-            val tempFahrenheit = tempCelsius * 9/5 + 32
+            val tempFahrenheit = tempCelsius * 9 / 5 + 32
             Text(text = "Temperature: %.2f°C / %.2f°F".format(tempCelsius, tempFahrenheit))
             Text(text = "Weather: ${it.weather[0].description}")
         } ?: errorMessage?.let {
@@ -198,10 +149,12 @@ fun WeatherScreen(fusedLocationClient: FusedLocationProviderClient) {
 }
 
 @SuppressLint("MissingPermission")
-private fun getLastLocation(
+private fun fetchLocationAndWeather(
     fusedLocationClient: FusedLocationProviderClient,
     context: android.content.Context,
-    onLocationReceived: (Double, Double, String, String, String) -> Unit
+    coroutineScope: CoroutineScope,
+    onWeatherFetched: (WeatherResponse, LocationDetails) -> Unit,
+    onError: (String) -> Unit
 ) {
     fusedLocationClient.lastLocation.addOnSuccessListener { location ->
         location?.let {
@@ -210,7 +163,18 @@ private fun getLastLocation(
             val cityName = addresses?.get(0)?.locality ?: "Unknown"
             val barangayName = addresses?.get(0)?.subLocality ?: "Unknown"
             val provinceName = addresses?.get(0)?.adminArea ?: "Unknown"
-            onLocationReceived(it.latitude, it.longitude, cityName, barangayName, provinceName)
+            coroutineScope.launch {
+                try {
+                    val response = RetrofitInstance.api.getWeather(
+                        latitude = it.latitude.toString(),
+                        longitude = it.longitude.toString(),
+                        apiKey = "8b9290da0228ad4e99bc79358e2c70b8"
+                    )
+                    onWeatherFetched(response, LocationDetails(cityName, barangayName, provinceName))
+                } catch (e: Exception) {
+                    onError(e.message ?: "Unknown error")
+                }
+            }
         }
     }
 }
@@ -228,6 +192,12 @@ private fun getWeatherIconResId(description: String): Int {
         else -> R.drawable.ic_unknown
     }
 }
+
+data class LocationDetails(
+    val city: String = "Unknown",
+    val barangay: String? = null,
+    val province: String? = null
+)
 
 @Preview(showBackground = true)
 @Composable
