@@ -101,7 +101,7 @@ private fun HourlyForecastItem(forecast: HourlyForecast) {
 
 private fun formatHour(timestamp: Long): String {
     return try {
-        SimpleDateFormat("HH:00", Locale.getDefault()).format(Date(timestamp * 1000L))
+        SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date(timestamp * 1000L))
     } catch (e: Exception) {
         Log.e("formatHour", "Invalid timestamp: $timestamp", e)
         "--:--"
