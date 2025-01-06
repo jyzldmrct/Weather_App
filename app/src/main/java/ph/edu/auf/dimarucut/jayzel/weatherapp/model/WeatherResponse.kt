@@ -1,10 +1,16 @@
 package ph.edu.auf.dimarucut.jayzel.weatherapp.model
 
 data class WeatherResponse(
+    val coord: Coord,
     val main: Main,
     val weather: List<Weather>,
     val wind: Wind,
     val name: String
+)
+
+data class Coordinates(
+    val lat: Double,
+    val lon: Double
 )
 
 data class Main(
@@ -41,8 +47,29 @@ data class Temperature(
 )
 
 data class WeatherCondition(
-    val id: Int,
-    val main: String,
     val description: String,
     val icon: String
+)
+
+data class HourlyForecastResponse(
+    val list: List<HourlyForecast>,
+    val city: City
+)
+
+data class HourlyForecast(
+    val dt: Long,
+    val main: Main,
+    val weather: List<Weather>
+)
+
+
+
+data class City(
+    val name: String,
+    val coord: Coord
+)
+
+data class Coord(
+    val lat: Double,
+    val lon: Double
 )
