@@ -6,6 +6,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ph.edu.auf.dimarucut.jayzel.weatherapp.model.WeatherResponse
@@ -21,17 +22,17 @@ fun WeatherDetails(weatherResponse: WeatherResponse) {
             .fillMaxWidth()
             .padding(16.dp)
     ) {
-        item {
-            Text(text = "UV Index: ${weatherResponse.uvIndex}", fontSize = 18.sp)
+       item {
+            Text(text = "UV Index: ${weatherResponse.uvIndex} | ", fontSize = 18.sp, fontWeight = FontWeight.Bold)
         }
         item {
-            Text(text = "Humidity: ${weatherResponse.main.humidity}%", fontSize = 18.sp)
+            Text(text = " Humidity: ${weatherResponse.main.humidity}% | ", fontSize = 18.sp, fontWeight = FontWeight.Bold)
         }
         item {
-            Text(text = "Feels Like: %.1f°C".format(feelsLikeCelsius), fontSize = 18.sp)
+            Text(text = " Feels Like: %.1f°C | ".format(feelsLikeCelsius), fontSize = 18.sp, fontWeight = FontWeight.Bold)
         }
         item {
-            Text(text = "Wind: ${weatherResponse.wind.speed} m/s $windDirection", fontSize = 18.sp)
+            Text(text = " Wind: ${weatherResponse.wind.speed} m/s $windDirection", fontSize = 18.sp, fontWeight = FontWeight.Bold)
         }
     }
 }

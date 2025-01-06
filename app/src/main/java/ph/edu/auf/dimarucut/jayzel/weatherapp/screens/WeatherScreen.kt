@@ -146,7 +146,6 @@ fun WeatherScreen(fusedLocationClient: FusedLocationProviderClient) {
                     onWeatherFetched = { response, details ->
                         weatherResponse = response
                         locationDetails = details
-                        searchQuery = details.city
                     },
                     onHourlyForecastFetched = { hourlyForecast = it },
                     onWeeklyForecastFetched = { weeklyForecasts = it },
@@ -248,7 +247,9 @@ fun SearchBar(
             }
         },
         trailingIcon = {
-            IconButton(onClick = onSearch) {
+            IconButton(onClick = {
+                onSearch()
+            }) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_search),
                     contentDescription = "Search"
