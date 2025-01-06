@@ -171,7 +171,10 @@ fun WeatherScreen(fusedLocationClient: FusedLocationProviderClient) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        WeeklyForecastSection(weeklyForecasts)
+        weatherResponse?.let { response ->
+            WeatherDetails(response)
+        }
+
     }
 }
 
@@ -391,28 +394,3 @@ fun getWeatherIconResId(description: String): Int {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun WeatherInfoPreview() {
-    val sampleWeatherResponse = WeatherResponse(
-        coord = Coord(lat = 14.5995, lon = 120.9842),
-        main = Main(temp = 298.15, humidity = 80),
-        weather = listOf(Weather(description = "clear sky", icon = "01d")),
-        wind = Wind(speed = 5.0),
-        name = "Manila"
-    )
-    val sampleLocationDetails = LocationDetails(
-        city = "Manila",
-        barangay = "Barangay 123",
-        province = "Metro Manila"
-    )
-    val sampleErrorMessage: String? = null
-
-    MaterialTheme {
-        WeatherInfo(
-            weatherResponse = sampleWeatherResponse,
-            locationDetails = sampleLocationDetails,
-            errorMessage = sampleErrorMessage
-        )
-    }
-}
