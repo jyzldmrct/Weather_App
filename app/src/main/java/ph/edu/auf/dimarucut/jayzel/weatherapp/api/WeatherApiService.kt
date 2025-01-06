@@ -29,4 +29,12 @@ interface WeatherApiService {
         @Query("units") units: String = "metric"
     ): HourlyForecastResponse
 
+    @GET("onecall")
+    suspend fun getWeeklyForecast(
+        @Query("lat") latitude: String,
+        @Query("lon") longitude: String,
+        @Query("exclude") exclude: String = "current,minutely,hourly,alerts", // Optional query to exclude extra data
+        @Query("appid") apiKey: String
+    ): WeeklyForecastResponse
+
 }

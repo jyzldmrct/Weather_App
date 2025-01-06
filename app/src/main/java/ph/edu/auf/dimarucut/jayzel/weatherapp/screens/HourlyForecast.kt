@@ -36,30 +36,32 @@ fun HourlyForecastSection(
         return
     }
 
-    Card(
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(16.dp),
-        shape = RoundedCornerShape(16.dp)
+            .padding(16.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
-        ) {
-            Text(
-                text = "Hourly Forecast",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
+        Text(
+            text = "Hourly Forecast",
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
 
-            Row(
+        Card(
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
                 modifier = Modifier
-                    .horizontalScroll(rememberScrollState())
-                    .padding(vertical = 8.dp)
+                    .padding(16.dp)
             ) {
-                hourlyForecasts.take(24).forEach { forecast ->
-                    HourlyForecastItem(forecast)
-                    Spacer(modifier = Modifier.width(16.dp))
+                Row(
+                    modifier = Modifier
+                        .horizontalScroll(rememberScrollState())
+                        .padding(vertical = 8.dp)
+                ) {
+                    hourlyForecasts.take(24).forEach { forecast ->
+                        HourlyForecastItem(forecast)
+                        Spacer(modifier = Modifier.width(16.dp))
+                    }
                 }
             }
         }

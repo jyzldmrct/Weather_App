@@ -27,9 +27,6 @@ data class Wind(
     val speed: Double
 )
 
-data class WeeklyForecastResponse(
-    val daily: List<DailyForecast>
-)
 
 data class DailyForecast(
     val dt: Long,
@@ -51,18 +48,13 @@ data class WeatherCondition(
     val icon: String
 )
 
-data class HourlyForecastResponse(
-    val list: List<HourlyForecast>,
-    val city: City
-)
+
 
 data class HourlyForecast(
     val dt: Long,
     val main: Main,
     val weather: List<Weather>
 )
-
-
 
 data class City(
     val name: String,
@@ -72,4 +64,18 @@ data class City(
 data class Coord(
     val lat: Double,
     val lon: Double
+)
+
+data class WeeklyForecast(
+    val day: String,
+    val temperature: Double,
+    val weatherDescription: String
+)
+
+data class HourlyForecastResponse(
+    val list: List<HourlyForecast>
+)
+
+data class WeeklyForecastResponse(
+    val list: List<WeeklyForecast>
 )
